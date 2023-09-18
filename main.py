@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Body, HTTPException
 from fastapi.responses import HTMLResponse
 
-from models import MovieCreate, MovieUpdate, generate_movie_id
+from models import Movie, generate_movie_id
 from movies import movies_list
 
 app = FastAPI(title='My Movie App', version='0.0.1', description='Una api de introducción a FastAPI')
@@ -26,7 +26,7 @@ def get_movie_by_id(movie_id: int):
 
 
 @app.get("/movies/", tags=['movies'])
-def get_movies_by_category(category: str, year: str):
+def get_movies_by_category(category: str, year: int):
     filtered_movies = [movie for movie in movies_list if movie['category'] == category and movie['year'] == year]
     if filtered_movies:
         return filtered_movies
@@ -34,7 +34,7 @@ def get_movies_by_category(category: str, year: str):
 
 
 @app.post("/movies", tags=['movies'])
-def create_movie(movie: MovieCreate = Body(...)):
+def create_movie(movie: Movie = Body(...)):
     movie_id = generate_movie_id()
     new_movie = {
         'id': movie_id,
@@ -49,7 +49,7 @@ def create_movie(movie: MovieCreate = Body(...)):
 
 
 @app.put("/movies/{id}", tags=["movies"])
-def update_movie(movie_id: int, movie_update: MovieUpdate = Body(...)):
+def update_movie(movie_id: int, movie_update: Movie = Body(...)):
     for movie in movies_list:
         if movie['id'] == movie_id:
             # Actualiza los campos de la película con los datos proporcionados
