@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Body, HTTPException
 from fastapi.responses import HTMLResponse
 
-from models import Movie, generate_movie_id
+from models import Movie
 from movies import movies_list
 
 app = FastAPI(title='My Movie App', version='0.0.1', description='Una api de introducción a FastAPI')
@@ -35,9 +35,13 @@ def get_movies_by_category(category: str, year: int):
 
 @app.post("/movies", tags=['movies'])
 def create_movie(movie: Movie = Body(...)):
-    movie_id = generate_movie_id()
+
+    # Verificar que no existe una película con el mismo id
+    if any(existing_movie['id'] == movie.id for existing_movie in movies_list):
+        raise HTTPException(status_code=400, detail=f"Ya existe una película con el ID {movie.id}.")
+
     new_movie = {
-        'id': movie_id,
+        'id': movie.id,
         'title': movie.title,
         'overview': movie.overview,
         'year': movie.year,

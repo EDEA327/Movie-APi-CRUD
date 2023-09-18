@@ -1,30 +1,22 @@
 from pydantic import BaseModel, Field
 
-# Variable global para realizar un seguimiento del último id asignado
-last_movie_id = 2
-
-
-def generate_movie_id():
-    global last_movie_id
-    last_movie_id += 1
-    return last_movie_id
-
 
 class Movie(BaseModel):
-    id: int = generate_movie_id()
+    id: int
     title: str = Field(min_length=5, max_length=20)
     overview: str = Field(min_length=5, max_length=30)
-    year: int = Field(min_length=4, le=2023)
-    rating: float = Field(le=10.0)
-    category: str
+    year: int = Field(le=2023, ge=1900)
+    rating: float = Field(ge=0, le=10.0)
+    category: str = Field(max_length=15)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
-                "id": generate_movie_id(),
+                "id": 3,
                 "title": "A movie",
                 "overview": "Starring Erick Escobar",
                 "year": 2022,
+                "rating": 10.0,
                 "category": "Acción"
             }
 
