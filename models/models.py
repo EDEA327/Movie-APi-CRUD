@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -12,7 +13,7 @@ class MovieCategory(str, Enum):
 
 
 class Movie(BaseModel):
-    id: int
+    id: Optional[int] = None
     title: str = Field(min_length=5, max_length=20)
     overview: str = Field(min_length=5, max_length=100)
     year: int = Field(le=2023, ge=1900)
@@ -22,7 +23,7 @@ class Movie(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "id": 3,
+                "id": 1,
                 "title": "A movie",
                 "overview": "Starring Erick Escobar",
                 "year": 2022,

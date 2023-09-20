@@ -1,15 +1,18 @@
-
-from typing import List
+from typing import List, Union
 
 from fastapi import FastAPI, Body, HTTPException, Path, Query, Depends
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
 
-
+from config.database import Session, Base, engine
 from data import movies_list
 from jwt_manager import create_token, JwtBearer
-from models import Movie, MovieCategory, User, MovieUpdate
+from models.models import Movie, MovieCategory, User, MovieUpdate
+from models.movie import MovieModel
 
 app = FastAPI(title='My Movie App', version='0.0.1', description='Una api de introducción a FastAPI')
+Base.metadata.create_all(bind=engine)
 
 
 @app.get("/", tags=['home'], status_code=200)
@@ -26,15 +29,21 @@ def login(user: User):
 
 @app.get("/movies", tags=['movies'], response_model=List[Movie], status_code=200, dependencies=[Depends(JwtBearer())])
 def get_movies() -> List[Movie]:
-    return movies_list
+    db = Session()
+    result = jsonable_encoder(db.query(MovieModel).all())
+
+    return result
 
 
-@app.get("/movies/{movie_id}", tags=['movies'], response_model=Movie, status_code=200, dependencies=[Depends(JwtBearer())])
+@app.get("/movies/{movie_id}", tags=['movies'], response_model=Movie, status_code=200,
+         dependencies=[Depends(JwtBearer())])
 def get_movie_by_id(movie_id: int = Path(ge=1, le=100)) -> Movie:
-    for item in movies_list:
-        if item['id'] == movie_id:
-            return item
-    raise HTTPException(status_code=404, detail=f'No se encontró la película con el id {movie_id}')
+    db: Session = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    if not result:
+        raise HTTPException(status_code=404, detail=f'No se encontró la película con el id {movie_id}')
+
+    return result
 
 
 @app.get("/movies/", tags=['movies'], response_model=List[Movie], status_code=200, dependencies=[Depends(JwtBearer())])
@@ -45,22 +54,26 @@ def get_movies_by_category(category: MovieCategory = Query(min_length=5, max_len
     raise HTTPException(status_code=404, detail=f'No hay películas para la categoría {category}')
 
 
-@app.post("/movies", tags=['movies'], status_code=201, dependencies=[Depends(JwtBearer())])
-def create_movie(movie: Movie = Body(...)):
-    # Verificar que no existe una película con el mismo id
-    if any(existing_movie['id'] == movie.id for existing_movie in movies_list):
-        raise HTTPException(status_code=400, detail=f"Ya existe una película con el ID {movie.id}.")
+@app.post("/movies", tags=['movies'], status_code=201, response_model=None, dependencies=[Depends(JwtBearer())])
+def create_movie(movie: Movie) -> Union[str, HTTPException]:
+    try:
+        db: Session = Session()
+        # Verifica si ya existe una película con el mismo id
+        existing_movie = db.query(MovieModel).filter_by(id=movie.id).first()
+        if existing_movie:
+            raise HTTPException(status_code=400, detail=f'Ya existe una película con el ID {movie.id}')
 
-    new_movie = {
-        'id': movie.id,
-        'title': movie.title,
-        'overview': movie.overview,
-        'year': movie.year,
-        'rating': movie.rating,
-        'category': movie.category
-    }
-    movies_list.append(new_movie)
-    return new_movie
+        # Crea una nueva película en la base de datos
+        new_movie = MovieModel(**movie.model_dump())
+        db.add(new_movie)
+        db.commit()
+
+        return f'Película {movie.title} añadida correctamente'
+
+    except Exception as e:
+        # Maneja cualquier error inesperado
+        db.rollback()  # Revierte la transacción en caso de error
+        raise HTTPException(status_code=500, detail=f'Error al procesar la solicitud: {str(e)}')
 
 
 @app.put("/movies/{id}", tags=["movies"], status_code=200, dependencies=[Depends(JwtBearer())])
