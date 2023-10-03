@@ -97,10 +97,12 @@ def update_movie(movie_id: int, movie_update: MovieUpdate = Body(...)):
 
 @app.delete("/movies/{id}", tags=["movies"], status_code=200, dependencies=[Depends(JwtBearer())])
 def delete_movie(movie_id: int):
-    initial_length = len(movies_list)
-    movies_list[:] = [movie for movie in movies_list if movie['id'] != movie_id]  # Actualizar la lista original
-
-    if len(movies_list) < initial_length:
-        return {"message": f"Película con el id {movie_id} eliminada correctamente"}
-    else:
+    db: Session = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    if not result:
         raise HTTPException(status_code=404, detail=f'No existe película con el id {movie_id}')
+
+    db.delete(result)
+    db.commit()
+
+    return {"message": f"Película con el id {movie_id} eliminada correctamente"}
