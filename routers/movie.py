@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from config.database import Session
-from middelwares.jwt_manager import JwtBearer
+from middelwares.jwt_bearer import JwtBearer
 from schemas.movie import Movie, MovieCategory, MovieUpdate
 from models.movie import MovieModel
 from services.movie import MovieService
@@ -83,7 +83,6 @@ def delete_movie(movie_id: int):
     if not result:
         raise HTTPException(status_code=404, detail=f'No existe película con el id {movie_id}')
 
-    db.delete(result)
-    db.commit()
+    MovieService(db).delete_movie(movie_id)
 
     return {"message": f"Película con el id {movie_id} eliminada correctamente"}
