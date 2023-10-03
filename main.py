@@ -6,7 +6,6 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from config.database import Session, Base, engine
-from data import movies_list
 from jwt_manager import create_token, JwtBearer
 from models.models import Movie, MovieCategory, User, MovieUpdate
 from models.movie import MovieModel
