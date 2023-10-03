@@ -79,16 +79,20 @@ def create_movie(movie: Movie) -> Union[str, HTTPException]:
 
 @app.put("/movies/{id}", tags=["movies"], status_code=200, dependencies=[Depends(JwtBearer())])
 def update_movie(movie_id: int, movie_update: MovieUpdate = Body(...)):
-    for movie in movies_list:
-        if movie['id'] == movie_id:
-            # Actualiza los campos de la película con los datos proporcionados
-            movie['title'] = movie_update.title
-            movie['overview'] = movie_update.overview
-            movie['year'] = movie_update.year
-            movie['rating'] = movie_update.rating
-            movie['category'] = movie_update.category
-            return movie
-    raise HTTPException(status_code=404, detail=f'No existe película con el id {movie_id}')
+    db: Session = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    if not result:
+        raise HTTPException(status_code=404, detail=f'No se encontró la película con el id {movie_id}')
+
+    result.title = movie_update.title
+    result.overview = movie_update.overview
+    result.year = movie_update.year
+    result.rating = movie_update.rating
+    result.category = movie_update.category
+
+    db.commit()
+
+    return f'Se ha modificado con éxito'
 
 
 @app.delete("/movies/{id}", tags=["movies"], status_code=200, dependencies=[Depends(JwtBearer())])
