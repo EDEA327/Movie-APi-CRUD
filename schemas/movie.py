@@ -34,13 +34,7 @@ class Movie(BaseModel):
         }
 
 
-class MovieUpdate(BaseModel):
-    title: str = Field(min_length=5, max_length=20)
-    overview: str = Field(min_length=5, max_length=100)
-    year: int = Field(le=2023, ge=1900)
-    rating: float = Field(ge=0, le=10.0)
-    category: MovieCategory = Field(max_length=15)
-
+class MovieUpdate(Movie):
     class Config:
         json_schema_extra = {
             "example": {

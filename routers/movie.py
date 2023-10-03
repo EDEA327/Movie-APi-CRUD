@@ -72,14 +72,7 @@ def update_movie(movie_id: int, movie_update: MovieUpdate = Body(...)):
     if not result:
         raise HTTPException(status_code=404, detail=f'No se encontró la película con el id {movie_id}')
 
-    result.title = movie_update.title
-    result.overview = movie_update.overview
-    result.year = movie_update.year
-    result.rating = movie_update.rating
-    result.category = movie_update.category
-
-    db.commit()
-
+    MovieService(db).update_movie(movie_id, movie_update)
     return f'Se ha modificado con éxito'
 
 

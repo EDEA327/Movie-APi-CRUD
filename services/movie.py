@@ -1,5 +1,5 @@
 from models.movie import MovieModel
-from schemas.movie import Movie
+from schemas.movie import Movie, MovieUpdate
 
 
 class MovieService:
@@ -21,6 +21,18 @@ class MovieService:
     def create_movie(self, movie: Movie):
         new_movie = MovieModel(**movie.model_dump())
         self.db.add(new_movie)
+        self.db.commit()
+
+        return
+
+    def update_movie(self, movie_id: int, data: MovieUpdate):
+        movie = self.db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+        movie.title = data.title
+        movie.overview = data.overview
+        movie.year = data.year
+        movie.rating = data.rating
+        movie.category = data.category
+
         self.db.commit()
 
         return
