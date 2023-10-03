@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from middelwares.jwt_manager import create_token
-from models.models import User
+from schemas.user import User
 
 user_router = APIRouter()
 

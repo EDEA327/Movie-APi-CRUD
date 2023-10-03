@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from config.database import Session
 from middelwares.jwt_manager import JwtBearer
-from models.models import Movie, MovieCategory, MovieUpdate
+from schemas.movie import Movie, MovieCategory, MovieUpdate
 from models.movie import MovieModel
 from services.movie import MovieService
 
@@ -55,9 +55,7 @@ def create_movie(movie: Movie) -> Union[str, HTTPException]:
             raise HTTPException(status_code=400, detail=f'Ya existe una película con el ID {movie.id}')
 
         # Crea una nueva película en la base de datos
-        new_movie = MovieModel(**movie.model_dump())
-        db.add(new_movie)
-        db.commit()
+        MovieService(db).create_movie(movie)
 
         return f'Película {movie.title} añadida correctamente'
 

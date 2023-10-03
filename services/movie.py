@@ -1,4 +1,5 @@
 from models.movie import MovieModel
+from schemas.movie import Movie
 
 
 class MovieService:
@@ -16,3 +17,10 @@ class MovieService:
     def category_filter(self, category):
         result = self.db.query(MovieModel).filter(MovieModel.category == category).all()
         return result
+
+    def create_movie(self, movie: Movie):
+        new_movie = MovieModel(**movie.model_dump())
+        self.db.add(new_movie)
+        self.db.commit()
+
+        return
