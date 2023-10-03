@@ -9,6 +9,7 @@ from config.database import Session
 from middelwares.jwt_manager import JwtBearer
 from models.models import Movie, MovieCategory, MovieUpdate
 from models.movie import MovieModel
+from services.movie import MovieService
 
 movie_router = APIRouter()
 
@@ -17,16 +18,16 @@ movie_router = APIRouter()
                   dependencies=[Depends(JwtBearer())])
 def get_movies() -> List[Movie]:
     db = Session()
-    result = jsonable_encoder(db.query(MovieModel).all())
+    result = MovieService(db).get_movies()
 
-    return result
+    return jsonable_encoder(result)
 
 
 @movie_router.get("/movies/{movie_id}", tags=['movies'], response_model=Movie, status_code=200,
                   dependencies=[Depends(JwtBearer())])
 def get_movie_by_id(movie_id: int = Path(ge=1, le=100)) -> Movie:
     db: Session = Session()
-    result = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    result = MovieService(db).get_movie(movie_id)
     if not result:
         raise HTTPException(status_code=404, detail=f'No se encontró la película con el id {movie_id}')
 
@@ -37,7 +38,7 @@ def get_movie_by_id(movie_id: int = Path(ge=1, le=100)) -> Movie:
                   dependencies=[Depends(JwtBearer())])
 def get_movies_by_category(category: MovieCategory = Query(min_length=5, max_length=15)) -> List[Movie]:
     db: Session = Session()
-    result = db.query(MovieModel).filter(MovieModel.category == category).all()
+    result = MovieService(db).category_filter(category)
     if not result:
         raise HTTPException(status_code=404, detail=f'No se encontró la categoría {category}')
     return result
@@ -69,7 +70,7 @@ def create_movie(movie: Movie) -> Union[str, HTTPException]:
 @movie_router.put("/movies/{id}", tags=["movies"], status_code=200, dependencies=[Depends(JwtBearer())])
 def update_movie(movie_id: int, movie_update: MovieUpdate = Body(...)):
     db: Session = Session()
-    result = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    result = MovieService(db).get_movie(movie_id)
     if not result:
         raise HTTPException(status_code=404, detail=f'No se encontró la película con el id {movie_id}')
 
@@ -87,7 +88,7 @@ def update_movie(movie_id: int, movie_update: MovieUpdate = Body(...)):
 @movie_router.delete("/movies/{id}", tags=["movies"], status_code=200, dependencies=[Depends(JwtBearer())])
 def delete_movie(movie_id: int):
     db: Session = Session()
-    result = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    result = MovieService(db).get_movie(movie_id)
     if not result:
         raise HTTPException(status_code=404, detail=f'No existe película con el id {movie_id}')
 
