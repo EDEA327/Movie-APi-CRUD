@@ -48,10 +48,11 @@ def get_movie_by_id(movie_id: int = Path(ge=1, le=100)) -> Movie:
 
 @app.get("/movies/", tags=['movies'], response_model=List[Movie], status_code=200, dependencies=[Depends(JwtBearer())])
 def get_movies_by_category(category: MovieCategory = Query(min_length=5, max_length=15)) -> List[Movie]:
-    filtered_movies = [movie for movie in movies_list if movie['category'] == category]
-    if filtered_movies:
-        return filtered_movies
-    raise HTTPException(status_code=404, detail=f'No hay películas para la categoría {category}')
+    db: Session = Session()
+    result = db.query(MovieModel).filter(MovieModel.category == category).all()
+    if not result:
+        raise HTTPException(status_code=404, detail=f'No se encontró la categoría {category}')
+    return result
 
 
 @app.post("/movies", tags=['movies'], status_code=201, response_model=None, dependencies=[Depends(JwtBearer())])
