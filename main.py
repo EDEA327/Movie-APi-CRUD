@@ -10,9 +10,11 @@ from data import movies_list
 from jwt_manager import create_token, JwtBearer
 from models.models import Movie, MovieCategory, User, MovieUpdate
 from models.movie import MovieModel
+from middelwares.error_handler import ErrorHandler
 
 app = FastAPI(title='My Movie App', version='0.0.1', description='Una api de introducción a FastAPI')
 Base.metadata.create_all(bind=engine)
+app.add_middleware(ErrorHandler)
 
 
 @app.get("/", tags=['home'], status_code=200)
